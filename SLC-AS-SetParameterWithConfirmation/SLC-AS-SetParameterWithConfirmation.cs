@@ -83,7 +83,7 @@ namespace SLCASSetParameterWithConfirmation
 			// ever happens in those cases.
 			dialog.YesButton.Pressed += (sender, args) =>
 			{
-				ParameterWriteGate.Execute(new ElementParameterWriter(element), inputs.ParameterId, inputs.Value, confirmed: true);
+				ParameterWriteGate.Execute(new ElementParameterWriter(element), inputs.ParameterId, inputs.Index, inputs.Value, confirmed: true);
 				engine.ExitSuccess("Parameter set.");
 			};
 			dialog.NoButton.Pressed += (sender, args) =>
@@ -153,6 +153,15 @@ namespace SLCASSetParameterWithConfirmation
 		/// <param name="parameterId">The parameter id.</param>
 		/// <param name="value">The value to set.</param>
 		void SetParameter(int parameterId, string value);
+
+		/// <summary>
+		/// Sets the given cell, identified by its column parameter id and row display key (index), to the given
+		/// value on the wrapped element. Used for table parameter sets.
+		/// </summary>
+		/// <param name="parameterId">The column parameter id.</param>
+		/// <param name="index">The display key of the row.</param>
+		/// <param name="value">The value to set.</param>
+		void SetParameter(int parameterId, string index, string value);
 	}
 
 	/// <summary>
@@ -176,6 +185,12 @@ namespace SLCASSetParameterWithConfirmation
 		{
 			element.SetParameter(parameterId, value);
 		}
+
+		/// <inheritdoc/>
+		public void SetParameter(int parameterId, string index, string value)
+		{
+			element.SetParameter(parameterId, index, value);
+		}
 	}
 
 	/// <summary>
@@ -189,16 +204,27 @@ namespace SLCASSetParameterWithConfirmation
 		/// </summary>
 		/// <param name="writer">The destination to write the parameter value to.</param>
 		/// <param name="parameterId">The parameter id to write.</param>
+		/// <param name="index">
+		/// The row display key (index) to write a table cell. <see langword="null"/> performs a regular,
+		/// non-table parameter set instead.
+		/// </param>
 		/// <param name="value">The value to write.</param>
 		/// <param name="confirmed">Whether the user explicitly confirmed the write.</param>
-		public static void Execute(IElementParameterWriter writer, int parameterId, string value, bool confirmed)
+		public static void Execute(IElementParameterWriter writer, int parameterId, string index, string value, bool confirmed)
 		{
 			if (!confirmed)
 			{
 				return;
 			}
 
-			writer.SetParameter(parameterId, value);
+			if (index == null)
+			{
+				writer.SetParameter(parameterId, value);
+			}
+			else
+			{
+				writer.SetParameter(parameterId, index, value);
+			}
 		}
 	}
 
@@ -207,10 +233,11 @@ namespace SLCASSetParameterWithConfirmation
 	/// </summary>
 	public sealed class ScriptInputs
 	{
-		private ScriptInputs(string elementIdentifier, int parameterId, string value, string confirmationMessage)
+		private ScriptInputs(string elementIdentifier, int parameterId, string index, string value, string confirmationMessage)
 		{
 			ElementIdentifier = elementIdentifier;
 			ParameterId = parameterId;
+			Index = index;
 			Value = value;
 			ConfirmationMessage = confirmationMessage;
 		}
@@ -224,6 +251,13 @@ namespace SLCASSetParameterWithConfirmation
 		/// Gets the parsed parameter id to set.
 		/// </summary>
 		public int ParameterId { get; }
+
+		/// <summary>
+		/// Gets the row display key (index) of the table cell to set, or <see langword="null"/> when the literal
+		/// value "null" (case-insensitive) or an empty value was supplied, meaning a regular, non-table parameter
+		/// set should be performed instead.
+		/// </summary>
+		public string Index { get; }
 
 		/// <summary>
 		/// Gets the value to set. May be empty.
@@ -287,7 +321,14 @@ namespace SLCASSetParameterWithConfirmation
 				return false;
 			}
 
-			inputs = new ScriptInputs(elementIdentifier, parameterId, value, confirmationMessage);
+			// The index is optional: an empty value or the literal value "null" (case-insensitive) means this is a
+			// regular, non-table parameter set. Any other value is treated as the row display key of a table cell.
+			var cleanedIndex = Clean(reader.Read(14));
+			string index = String.IsNullOrWhiteSpace(cleanedIndex) || String.Equals(cleanedIndex, "null", StringComparison.OrdinalIgnoreCase)
+				? null
+				: cleanedIndex;
+
+			inputs = new ScriptInputs(elementIdentifier, parameterId, index, value, confirmationMessage);
 			error = null;
 			return true;
 		}

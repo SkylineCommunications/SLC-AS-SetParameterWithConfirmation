@@ -27,6 +27,9 @@
 		<ScriptParameter id="13" type="string" values="">
 			<Description>ConfirmationMessage</Description>
 		</ScriptParameter>
+		<ScriptParameter id="14" type="string" values="">
+			<Description>Index</Description>
+		</ScriptParameter>
 	</Parameters>
 
 	<Script>
