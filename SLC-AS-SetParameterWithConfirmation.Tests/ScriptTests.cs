@@ -28,6 +28,7 @@ namespace SLCASSetParameterWithConfirmation.Tests
 			reader.Setup(r => r.Read(11)).Returns("[\"5\"]");
 			reader.Setup(r => r.Read(12)).Returns("[\"NewValue\"]");
 			reader.Setup(r => r.Read(13)).Returns("[\"Are you sure?\"]");
+			reader.Setup(r => r.Read(14)).Returns("[\"null\"]");
 
 			bool result = ScriptInputs.TryParse(reader.Object, out ScriptInputs inputs, out string error);
 
@@ -35,8 +36,63 @@ namespace SLCASSetParameterWithConfirmation.Tests
 			error.Should().BeNull();
 			inputs.ElementIdentifier.Should().Be("Element1");
 			inputs.ParameterId.Should().Be(5);
+			inputs.Index.Should().BeNull();
 			inputs.Value.Should().Be("NewValue");
 			inputs.ConfirmationMessage.Should().Be("Are you sure?");
+		}
+
+		[Theory]
+		[InlineData("null")]
+		[InlineData("Null")]
+		[InlineData("NULL")]
+		[InlineData("")]
+		[InlineData("   ")]
+		public void TryParse_NullOrEmptyIndex_IsTreatedAsNoIndex(string rawIndex)
+		{
+			var reader = new Mock<IScriptInputReader>();
+			reader.Setup(r => r.Read(10)).Returns("Element1");
+			reader.Setup(r => r.Read(11)).Returns("5");
+			reader.Setup(r => r.Read(12)).Returns("NewValue");
+			reader.Setup(r => r.Read(13)).Returns("Are you sure?");
+			reader.Setup(r => r.Read(14)).Returns(rawIndex);
+
+			bool result = ScriptInputs.TryParse(reader.Object, out ScriptInputs inputs, out string error);
+
+			result.Should().BeTrue();
+			inputs.Index.Should().BeNull();
+		}
+
+		[Fact]
+		public void TryParse_IndexProvided_IsParsedAsTableRowKey()
+		{
+			var reader = new Mock<IScriptInputReader>();
+			reader.Setup(r => r.Read(10)).Returns("Element1");
+			reader.Setup(r => r.Read(11)).Returns("5");
+			reader.Setup(r => r.Read(12)).Returns("NewValue");
+			reader.Setup(r => r.Read(13)).Returns("Are you sure?");
+			reader.Setup(r => r.Read(14)).Returns("[\"Row 1\"]");
+
+			bool result = ScriptInputs.TryParse(reader.Object, out ScriptInputs inputs, out string error);
+
+			result.Should().BeTrue();
+			inputs.Index.Should().Be("Row 1");
+		}
+
+		[Fact]
+		public void TryParse_UnspecifiedIndexParameter_IsTreatedAsNoIndex()
+		{
+			// Simulates a reader that has no configured value for script parameter 14 (e.g. an older
+			// caller/mock that does not set it up at all), which should behave the same as "null".
+			var reader = new Mock<IScriptInputReader>();
+			reader.Setup(r => r.Read(10)).Returns("Element1");
+			reader.Setup(r => r.Read(11)).Returns("5");
+			reader.Setup(r => r.Read(12)).Returns("NewValue");
+			reader.Setup(r => r.Read(13)).Returns("Are you sure?");
+
+			bool result = ScriptInputs.TryParse(reader.Object, out ScriptInputs inputs, out string error);
+
+			result.Should().BeTrue();
+			inputs.Index.Should().BeNull();
 		}
 
 		[Fact]
@@ -110,13 +166,25 @@ namespace SLCASSetParameterWithConfirmation.Tests
 	public class ParameterWriteGateTests
 	{
 		[Fact]
-		public void Execute_Confirmed_CallsSetParameter()
+		public void Execute_ConfirmedNoIndex_CallsSingleSetParameter()
 		{
 			var writer = new Mock<IElementParameterWriter>();
 
-			ParameterWriteGate.Execute(writer.Object, 5, "NewValue", confirmed: true);
+			ParameterWriteGate.Execute(writer.Object, 5, null, "NewValue", confirmed: true);
 
 			writer.Verify(w => w.SetParameter(5, "NewValue"), Times.Once);
+			writer.Verify(w => w.SetParameter(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+		}
+
+		[Fact]
+		public void Execute_ConfirmedWithIndex_CallsTableSetParameter()
+		{
+			var writer = new Mock<IElementParameterWriter>();
+
+			ParameterWriteGate.Execute(writer.Object, 5, "Row 1", "NewValue", confirmed: true);
+
+			writer.Verify(w => w.SetParameter(5, "Row 1", "NewValue"), Times.Once);
+			writer.Verify(w => w.SetParameter(It.IsAny<int>(), It.IsAny<string>()), Times.Never);
 		}
 
 		[Fact]
@@ -124,9 +192,21 @@ namespace SLCASSetParameterWithConfirmation.Tests
 		{
 			var writer = new Mock<IElementParameterWriter>();
 
-			ParameterWriteGate.Execute(writer.Object, 5, "NewValue", confirmed: false);
+			ParameterWriteGate.Execute(writer.Object, 5, null, "NewValue", confirmed: false);
 
 			writer.Verify(w => w.SetParameter(It.IsAny<int>(), It.IsAny<string>()), Times.Never);
+			writer.Verify(w => w.SetParameter(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+		}
+
+		[Fact]
+		public void Execute_NotConfirmedWithIndex_NeverCallsSetParameter()
+		{
+			var writer = new Mock<IElementParameterWriter>();
+
+			ParameterWriteGate.Execute(writer.Object, 5, "Row 1", "NewValue", confirmed: false);
+
+			writer.Verify(w => w.SetParameter(It.IsAny<int>(), It.IsAny<string>()), Times.Never);
+			writer.Verify(w => w.SetParameter(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
 		}
 	}
 

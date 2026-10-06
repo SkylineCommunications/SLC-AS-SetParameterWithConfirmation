@@ -12,6 +12,7 @@ This makes it a safer alternative to a plain "set parameter" script for actions 
 - **Fail-safe by default**: any outcome other than an explicit "Yes" (No, closing the dialog, detaching, aborting, or a timeout) leaves the element untouched.
 - **Flexible element lookup**: accepts either an element name or a `DataMinerID/ElementID` key.
 - **Works with any string-settable parameter**: pass any parameter ID and value supported by the target element.
+- **Table parameter support**: optionally supply a row index/display key to set a single cell in a table parameter instead of a regular parameter.
 
 ## Prerequisites
 
@@ -26,3 +27,4 @@ This makes it a safer alternative to a plain "set parameter" script for actions 
 | 11 | Parameter Identifier | The numeric ID of the parameter to set. |
 | 12 | Value | The value to write to the parameter. May be empty. |
 | 13 | ConfirmationMessage | The message shown to the operator in the confirmation dialog. |
+| 14 | Index | Optional row display key for a table parameter. Leave empty or set to `null` to perform a regular, non-table parameter set. |
