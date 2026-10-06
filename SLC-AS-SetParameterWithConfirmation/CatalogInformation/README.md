@@ -23,8 +23,8 @@ This makes it a safer alternative to a plain "set parameter" script for actions 
 
 | ID | Name | Description |
 |----|------|--------------|
-| 10 | Element Identifier | The element to update, either by name or by `DataMinerID/ElementID` key. |
-| 11 | Parameter Identifier | The numeric ID of the parameter to set. |
+| 10 | Element | The element to update, either by name or by `DataMinerID/ElementID` key. |
+| 11 | Parameter | The numeric ID of the parameter to set. |
 | 12 | Value | The value to write to the parameter. May be empty. |
-| 13 | ConfirmationMessage | The message shown to the operator in the confirmation dialog. |
+| 13 | Confirmation Message | The message shown to the operator in the confirmation dialog. |
 | 14 | Index | Optional row display key for a table parameter. Leave empty or set to `null` to perform a regular, non-table parameter set. |
