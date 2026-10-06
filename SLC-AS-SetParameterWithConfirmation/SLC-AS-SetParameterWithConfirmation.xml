@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <DMSScript options="272" xmlns="http://www.skyline.be/automation">
-	<Name>SLC-AS-SetParameterWithConfirmation</Name>
+	<Name>Set Parameter With Confirmation</Name>
 	<Description></Description>
 	<Type>Automation</Type>
 	<Author>Skyline Communications</Author>
@@ -16,16 +16,16 @@
 
 	<Parameters>
 		<ScriptParameter id="10" type="string" values="">
-			<Description>Element Identifier</Description>
+			<Description>Element</Description>
 		</ScriptParameter>
 		<ScriptParameter id="11" type="string" values="">
-			<Description>Parameter Identifier</Description>
+			<Description>Parameter</Description>
 		</ScriptParameter>
 		<ScriptParameter id="12" type="string" values="">
 			<Description>Value</Description>
 		</ScriptParameter>
 		<ScriptParameter id="13" type="string" values="">
-			<Description>ConfirmationMessage</Description>
+			<Description>Confirmation Message</Description>
 		</ScriptParameter>
 		<ScriptParameter id="14" type="string" values="">
 			<Description>Index</Description>

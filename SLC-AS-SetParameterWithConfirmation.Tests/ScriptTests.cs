@@ -125,7 +125,7 @@ namespace SLCASSetParameterWithConfirmation.Tests
 
 			result.Should().BeFalse();
 			inputs.Should().BeNull();
-			error.Should().Contain("Invalid Element Identifier");
+			error.Should().Contain("Invalid Element");
 		}
 
 		[Theory]

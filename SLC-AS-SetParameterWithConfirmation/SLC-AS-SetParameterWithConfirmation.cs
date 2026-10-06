@@ -298,7 +298,7 @@ namespace SLCASSetParameterWithConfirmation
 			if (String.IsNullOrWhiteSpace(elementIdentifier))
 			{
 				inputs = null;
-				error = $"Invalid Element Identifier: '{elementIdentifier}'";
+				error = $"Invalid Element: '{elementIdentifier}'";
 				return false;
 			}
 
