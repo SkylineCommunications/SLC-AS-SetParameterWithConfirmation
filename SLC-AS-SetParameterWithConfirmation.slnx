@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="SLC-AS-SetParameterWithConfirmation/SLC-AS-SetParameterWithConfirmation.csproj" />
+  <Project Path="SLC-AS-SetParameterWithConfirmation.Tests/SLC-AS-SetParameterWithConfirmation.Tests.csproj" />
+</Solution>
